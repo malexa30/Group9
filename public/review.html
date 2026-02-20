@@ -1,80 +1,70 @@
 
-<!--Page for feedback to be reviewed-->
-
+<!--Set up HTML doc and establish parameters-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <!--Set up proper formatting and character display-->
   <meta charset="UTF-8">
-  <title>Feedback Review</title>
+
+  <!--Title the browser tab-->
+  <title>Review Feedback</title>
+
+  <!--CSS styling for visual purposes-->
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f2f2f2;
-    }
-
-    h1 {
-      text-align: center;
-    }
-
-    .feedback-item {
-      background: white;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .reply {
-      margin-top: 10px;
-      padding: 10px;
-      background: #eef5ff;
-      border-left: 4px solid #007bff;
-    }
+    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+    h1 { text-align: center; }
+    .feedback-item { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+   
+    hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
   </style>
 </head>
 <body>
-  <h1>Feedback & Responses</h1>
-  <p>You can view manager responses to anonymous feedback here.</p>
-    <p>Have further questions? Submit additional feedback for review.</p>
 
-  <div id="feedback-container">Loading...</div>
+  <!--Title-->
+  <h1>Review Feedback</h1>
+
+    <!--Spot for feedback to go, and let user know that feedback will be displayed here-->
+  <div id="review-container">Loading feedback...</div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const container = document.getElementById("feedback-container");
+    //Feedback cards
+    const container = document.getElementById("review-container");
 
-      fetch("/api/feedback")
-        .then(res => res.json())
-        .then(data => {
-          container.innerHTML = "";
+    //GET request, convert into array of objects
+    fetch("/api/feedback")
+      .then(res => res.json())
+      //If no feedback is submitted, let user know
+      .then(data => {
+        container.innerHTML = "";
+        if (!data.length) {
+          container.innerHTML = "<p>No feedback submitted yet.</p>";
+          return;
+        }
 
-          if (!data.length) {
-            container.innerHTML = "<p>No feedback available.</p>";
-            return;
-          }
+        //Loop for each object
+        data.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "feedback-item";
 
-          data.forEach(item => {
-            const div = document.createElement("div");
-            div.className = "feedback-item";
+          //Show all parameters and sort the items/separate them 
+          div.innerHTML = `
+            <p><strong>Impact:</strong> ${item.impact}</p>
+            <p><strong>Feedback:</strong> ${item.feedback}</p>
+            <p><strong>Manager Reply:</strong> ${item.reply || "<em>No reply yet</em>"}</p>
+            <hr>
+          `;
 
-            div.innerHTML = `
-              <p><strong>Feedback:</strong> ${item.feedback}</p>
-              ${
-                item.reply
-                  ? `<div class="reply"><strong>Response:</strong> ${item.reply}</div>`
-                  : `<em>No response yet</em>`
-              }
-            `;
-
-            container.appendChild(div);
-          });
-        })
-        .catch(err => {
-          console.error(err);
-          container.innerHTML = "<p>Error loading feedback.</p>";
+          //Append feedback to container
+          container.appendChild(div);
         });
-    });
+      })
+
+      //Catch error/explain 
+      .catch(err => {
+        console.error(err);
+        container.innerHTML = "<p>Error loading feedback.</p>";
+      });
   </script>
 </body>
 </html>

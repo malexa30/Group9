@@ -1,12 +1,20 @@
+
+<!--Set up HTML doc and establish parameters-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <!--Set up proper formatting and character display-->
   <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
+
+  <!--Title the browser tab-->
+  <title>Manager Dashboard</title>
+
+    <!--CSS styling for visual purposes-->
   <style>
     body { font-family: Arial; padding: 20px; background: #f9f9f9; }
     h1 { text-align: center; }
-    #feedback-container { margin-top: 20px; }
+
     .feedback-item { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     textarea { width: 100%; height: 60px; margin-top: 5px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; resize: vertical; }
     button { margin-top: 5px; padding: 5px 10px; border: none; border-radius: 5px; background: #007bff; color: white; cursor: pointer; }
@@ -15,71 +23,86 @@
   </style>
 </head>
 <body>
-  <h1>Admin Dashboard</h1>
 
+  <!--Title-->
+  <h1>Manager Dashboard</h1>
+
+  <!--Spot for feedback to go, and let user know that feedback will be displayed here-->
   <div id="feedback-container">Loading feedback...</div>
 
+  <!--Begin javascript-->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const container = document.getElementById("feedback-container");
+    const container = document.getElementById("feedback-container");
 
-      function loadFeedback() {
-        fetch("/api/feedback")
-          .then(res => res.json())
-          .then(data => {
-            container.innerHTML = "";
-            if (!data.length) {
-              container.innerHTML = "<p>No feedback submitted yet.</p>";
-              return;
-            }
+    //Load feedback, set up GET request, and make response an array of feedback objects
+    function loadFeedback() {
+      fetch("/api/feedback")
+        .then(res => res.json())
+        .then(data => {
+          container.innerHTML = "";
+          //If no feedback is submitted, let user know
+          if (!data.length) {
+            container.innerHTML = "<p>No feedback submitted yet.</p>";
+            return;
+          }
 
-            data.forEach((item, index) => {
-              const div = document.createElement("div");
-              div.className = "feedback-item";
+          //Loop for each array item
+          data.forEach((item, index) => {
+            const div = document.createElement("div");
+            div.className = "feedback-item";
 
-              div.innerHTML = `
-                <p><strong>Feedback:</strong> ${item.feedback}</p>
-                <p><strong>Reply:</strong> ${item.reply || "<em>No reply yet</em>"}</p>
-                <textarea placeholder="Write a reply..."></textarea>
-                <button>Send Reply</button>
-                <hr>
-              `;
+            //Feedback to HTML with all parameters needed, 
+            //Est a place for responses and impact level/category sorting
+            div.innerHTML = `
+              <p><strong>Impact:</strong> ${item.impact}</p>
+              <p><strong>Feedback:</strong> ${item.feedback}</p>
+              <p><strong>Reply:</strong> ${item.reply || "<em>No reply yet</em>"}</p>
+              <textarea placeholder="Write a reply..."></textarea>
+              <button>Send Reply</button>
+              <hr>
+            `;
 
-              const button = div.querySelector("button");
-              const textarea = div.querySelector("textarea");
+            const button = div.querySelector("button");
+            const textarea = div.querySelector("textarea");
 
-              button.addEventListener("click", () => {
-                const replyText = textarea.value.trim();
-                if (!replyText) return alert("Please type a reply before sending.");
+            //Read text, ensure there is not a blank submission
+            button.addEventListener("click", () => {
+              const replyText = textarea.value.trim();
+              if (!replyText) return alert("Please type a reply before sending.");
 
-                fetch(`/api/feedback/${index}/reply`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                  body: `reply=${encodeURIComponent(replyText)}`
-                }).then(res => {
-                  if (res.ok) {
-                    div.querySelector("p:nth-child(2)").innerHTML = `<strong>Reply:</strong> ${replyText}`;
-                    textarea.value = "";
-                  } else {
-                    alert("Failed to save reply");
-                  }
-                }).catch(err => {
-                  console.error(err);
-                  alert("Error sending reply");
-                });
+              //Send reply 
+              fetch(`/api/feedback/${index}/reply`, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `reply=${encodeURIComponent(replyText)}`
+
+                //Ensure it is sent or explains an error occured 
+              }).then(res => {
+                if (res.ok) {
+                  div.querySelector("p:nth-child(3)").innerHTML = `<strong>Reply:</strong> ${replyText}`;
+                  textarea.value = "";
+                } else {
+                  alert("Failed to save reply");
+                }
+              }).catch(err => {
+                console.error(err);
+                alert("Error sending reply");
               });
-
-              container.appendChild(div);
             });
-          })
-          .catch(err => {
-            console.error(err);
-            container.innerHTML = "<p>Error loading feedback.</p>";
-          });
-      }
 
-      loadFeedback();
-    });
+            //Add feedback to container
+            container.appendChild(div);
+          });
+        })
+        //Catch errors/explain if so
+        .catch(err => {
+          console.error(err);
+          container.innerHTML = "<p>Error loading feedback.</p>";
+        });
+    }
+
+    //Call loadFeedback on page reload
+    loadFeedback();
   </script>
 </body>
 </html>

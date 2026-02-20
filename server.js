@@ -19,16 +19,59 @@ app.get("/", (req, res) => {
 
 app.post("/submit", (req, res) => {
   const feedback = req.body.feedback;
+  const impact = req.body.impact;
+
   if (feedback) {
-    // Store feedback as an object with empty reply
-    feedbackList.push({ feedback: feedback, reply: "" });
+    feedbackList.push({
+      feedback: feedback,
+      impact: impact,
+      reply: ""
+    });
   }
+
   res.sendFile(__dirname + "/public/confirmation.html");
 });
 
 // Admin page: view & submit feedback
+//Updated to allow for feedback category filtering
 app.get("/admin", (req, res) => {
-  res.sendFile(__dirname + "/public/admin.html");
+  const selectedImpact = req.query.impact;
+
+  let filteredFeedback = feedbackList;
+
+  if (selectedImpact) {
+    filteredFeedback = feedbackList.filter(
+      item => item.impact === selectedImpact
+    );
+  }
+
+  let html = `
+    <h1>Feedback Review</h1>
+
+    <form method="GET" action="/admin">
+      <label>Filter by Impact:</label>
+      <select name="impact">
+        <option value="">All</option>
+        <option value="Urgent">Urgent</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <button type="submit">Filter</button>
+    </form>
+
+    <hr>
+  `;
+
+  filteredFeedback.forEach(item => {
+  html += `
+    <p><strong>Impact:</strong> ${item.impact}</p>
+    <p><strong>Feedback:</strong> ${item.feedback}</p>
+    <hr>
+  `;
+});
+
+  res.send(html);
 });
 
 // API route: manager fetches all feedback
